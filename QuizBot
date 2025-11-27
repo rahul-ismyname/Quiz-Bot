@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genius Word Problems</title>
+    
+    <!-- React and ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400&family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .font-serif {
+            font-family: 'Lora', serif;
+        }
+        .font-comic {
+            font-family: 'Comic Neue', cursive;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        .animate-slide-up {
+            animation: slideUp 0.5s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback } = React;
+
+        // ==========================================
+        //  👇 PASTE YOUR API KEYS HERE 👇
+        // ==========================================
+        const API_KEYS = [
+            "AIzaSyCU8C-vu8pMiX3U6CJAEv6hH8LqAseUqls", // <--- Paste Key #1 inside these quotes
+            "AIzaSyAgA8-aVPZauTMrHdcwWvQspfrjO_NCJ9s",
+            "AIzaSyDNN5rc7pb9ZRePZ42XfAR3Uewr6IULZOU"  // <--- Paste Key #2 inside these quotes
+        ];
+        // ==========================================
+
+        // --- Internal Icons ---
+        const Icons = {
+            Calculator: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>,
+            Atom: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><path d="M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5Z"/><path d="M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5Z"/></svg>,
+            Beaker: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 3h15"/><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"/><path d="M6 14h12"/></svg>,
+            Brain: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>,
+            Sparkles: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M9 3v4"/><path d="M3 5h4"/><path d="M3 9h4"/></svg>,
+            Lightbulb: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2.5 1.5-4.1 0-3.6-3-6.5-6-6.5S6 4.5 6 8.1c0 1.6.5 3.1 1.5 4.1.8.8 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>,
+            CheckCircle: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>,
+            ArrowRight: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>,
+            ArrowLeft: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>,
+            Refresh: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>,
+            Alert: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>,
+            Edit: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>,
+            CloudDownload: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m8 17 4 4 4-4"/></svg>
+        };
+
+        // --- Configuration Data ---
+        const SUBJECTS = {
+            "Mathematics": {
+                icon: <Icons.Calculator />,
+                color: "bg-blue-100 text-blue-600",
+                chapters: ["Arithmetic Operations", "Fractions & Decimals", "Percentages", "Ratio & Proportion", "Algebraic Expressions", "Linear Equations", "Geometry: Area & Perimeter", "Geometry: Angles & Triangles", "Data Handling", "Probability", "Exponents", "Trigonometry"]
+            },
+            "Physics": {
+                icon: <Icons.Atom />,
+                color: "bg-purple-100 text-purple-600",
+                chapters: ["Motion & Kinematics", "Force & Newton's Laws", "Gravitation", "Work, Energy & Power", "Sound Waves", "Light & Optics", "Current Electricity", "Magnetism"]
+            },
+            "Chemistry": {
+                icon: <Icons.Beaker />,
+                color: "bg-teal-100 text-teal-600",
+                chapters: ["Matter & States", "Atoms & Molecules", "Atomic Structure", "Chemical Reactions", "Acids, Bases & Salts", "Periodic Table", "Metals & Non-Metals"]
+            }
+        };
+
+        const DIFFICULTIES = [
+            { id: "Elementary (Grades 4-6)", class: "bg-cyan-100 text-cyan-700 border-cyan-200 ring-cyan-200" },
+            { id: "Easy", class: "bg-green-100 text-green-700 border-green-200 ring-green-200" },
+            { id: "Medium", class: "bg-yellow-100 text-yellow-700 border-yellow-200 ring-yellow-200" },
+            { id: "Hard", class: "bg-orange-100 text-orange-700 border-orange-200 ring-orange-200" },
+            { id: "Olympiad", class: "bg-red-100 text-red-700 border-red-200 ring-red-200" }
+        ];
+
+        // --- Gemini API Helper (With Key Rotation) ---
+        let keyRotationIndex = 0;
+
+        const generateQuestionFromGemini = async (subject, chapter, difficulty) => {
+            // Filter out empty keys
+            const validKeys = API_KEYS.filter(k => k && k.trim().length > 0);
+            
+            // Fallback to environment key if no user keys provided
+            let activeKey;
+            const envKey = ""; // This is automatically injected by the environment if you don't use your own
+
+            if (validKeys.length > 0) {
+                // Round Robin Rotation Logic
+                activeKey = validKeys[keyRotationIndex % validKeys.length];
+                keyRotationIndex++;
+                console.log(`Using Custom API Key #${(keyRotationIndex - 1) % validKeys.length + 1}`);
+            } else {
+                activeKey = envKey;
+                console.log("Using Environment API Key");
+            }
+
+            if (!activeKey) {
+                throw new Error("No API Key found. Please paste your keys in the code at the top.");
+            }
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${activeKey}`;
+
+            const systemPrompt = `You are a world-class tutor. Create a unique word problem.
+            If the difficulty is "Elementary (Grades 4-6)", use simple language, smaller numbers, and fun scenarios (like sharing candy, buying toys, simple speed).
+            Respond ONLY with valid JSON.`;
+            
+            const userPrompt = `Create a word problem for Subject: ${subject}, Topic: ${chapter}, Difficulty: ${difficulty}.
+            JSON Schema: { "question": "The problem text", "hint": "A subtle hint", "answer": "The final answer", "explanation": "Step-by-step solution" }
+            No markdown.`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userPrompt }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: { responseMimeType: "application/json" }
+            };
+
+            const response = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                // If we get an error, it might be quota.
+                // In a production app, we would recursively retry with the next key here.
+                throw new Error(`API Error: ${response.status}. Please check your keys or quota.`);
+            }
+
+            const data = await response.json();
+            const cleanJson = data.candidates[0].content.parts[0].text.replace(/^```json|```$/g, '').trim();
+            return JSON.parse(cleanJson);
+        };
+
+        // --- Components ---
+
+        const Button = ({ onClick, disabled, loading, children, className, variant = "primary" }) => {
+            const base = "flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-semibold transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed";
+            const variants = {
+                primary: "bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200",
+                secondary: "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50",
+                outline: "border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50",
+            };
+            return (
+                <button onClick={onClick} disabled={disabled || loading} className={`${base} ${variants[variant]} ${className}`}>
+                    {loading ? <Icons.Refresh className="w-5 h-5 animate-spin" /> : children}
+                </button>
+            );
+        };
+
+        const App = () => {
+            // View State: 'config' | 'problem'
+            const [view, setView] = useState('config');
+
+            // Config State
+            const [subject, setSubject] = useState("Mathematics");
+            const [chapter, setChapter] = useState(SUBJECTS["Mathematics"].chapters[0]);
+            const [difficulty, setDifficulty] = useState("Medium");
+            
+            // Problem State
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState(null);
+            const [problem, setProblem] = useState(null);
+            
+            // Interaction State
+            const [userGuess, setUserGuess] = useState("");
+            const [isGuessSubmitted, setIsGuessSubmitted] = useState(false);
+            const [showHint, setShowHint] = useState(false);
+
+            // Background Loading State
+            const [nextProblem, setNextProblem] = useState(null);
+            const [isPreloading, setIsPreloading] = useState(false);
+
+            const handleConfigChange = useCallback((setter, value) => {
+                setter(value);
+                setNextProblem(null); 
+                if (value in SUBJECTS) setChapter(SUBJECTS[value].chapters[0]);
+            }, []);
+
+            const fetchProblem = async (sub, chap, diff) => {
+                return await generateQuestionFromGemini(sub, chap, diff);
+            };
+
+            const handleGenerate = async () => {
+                setLoading(true);
+                setError(null);
+                try {
+                    let newProblem;
+                    if (nextProblem) {
+                        newProblem = nextProblem;
+                        setNextProblem(null);
+                    } else {
+                        newProblem = await fetchProblem(subject, chapter, difficulty);
+                    }
+                    setProblem(newProblem);
+                    setUserGuess("");
+                    setIsGuessSubmitted(false);
+                    setShowHint(false);
+                    setView('problem');
+                } catch (err) {
+                    console.error(err);
+                    setError(err.message || "Could not generate problem.");
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            // Background Fetcher
+            useEffect(() => {
+                if (view === 'problem' && problem && !nextProblem && !isPreloading) {
+                    const loadNext = async () => {
+                        setIsPreloading(true);
+                        try {
+                            const bgProblem = await fetchProblem(subject, chapter, difficulty);
+                            setNextProblem(bgProblem);
+                        } catch (e) {
+                            console.error("Background fetch failed", e);
+                        } finally {
+                            setIsPreloading(false);
+                        }
+                    };
+                    loadNext();
+                }
+            }, [view, problem, nextProblem, isPreloading, subject, chapter, difficulty]);
+
+            const handleBack = () => {
+                setView('config');
+                setProblem(null);
+                setNextProblem(null);
+            };
+
+            const handleSubmitGuess = () => {
+                if (!userGuess.trim()) return;
+                setIsGuessSubmitted(true);
+            };
+
+            // Enter key handler
+            const handleKeyDown = (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault(); // Prevent new line
+                    handleSubmitGuess();
+                }
+            };
+
+            return (
+                <div className="min-h-screen bg-slate-50 text-slate-900 pb-20 relative">
+                    
+                    {view === 'config' ? (
+                        <div className="flex items-center justify-center min-h-screen p-4">
+                            <div className="w-full max-w-2xl bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden animate-fade-in">
+                                <div className="bg-indigo-600 px-8 py-6 text-white text-center">
+                                    <div className="flex justify-center mb-4">
+                                        <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
+                                            <Icons.Brain />
+                                        </div>
+                                    </div>
+                                    <h1 className="text-2xl font-bold">Word Problem Generator</h1>
+                                    <p className="text-indigo-100 text-sm mt-2">Customize your practice session</p>
+                                </div>
+
+                                <div className="p-8 space-y-8">
+                                    {/* Subject */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Choose Subject</label>
+                                        <div className="grid grid-cols-3 gap-3">
+                                            {Object.keys(SUBJECTS).map(key => (
+                                                <button
+                                                    key={key}
+                                                    onClick={() => handleConfigChange(setSubject, key)}
+                                                    className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${
+                                                        subject === key 
+                                                        ? 'border-indigo-600 bg-indigo-50 ring-2 ring-indigo-600 ring-offset-2' 
+                                                        : 'border-slate-100 hover:bg-slate-50 hover:border-slate-200'
+                                                    }`}
+                                                >
+                                                    <div className={`p-2 rounded-lg ${SUBJECTS[key].color}`}>
+                                                        {SUBJECTS[key].icon}
+                                                    </div>
+                                                    <span className="text-sm font-semibold">{key}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Configuration */}
+                                    <div className="space-y-6">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Topic</label>
+                                            <select 
+                                                value={chapter}
+                                                onChange={(e) => handleConfigChange(setChapter, e.target.value)}
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            >
+                                                {SUBJECTS[subject].chapters.map(chap => (
+                                                    <option key={chap} value={chap}>{chap}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Difficulty</label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {DIFFICULTIES.map(d => (
+                                                    <button
+                                                        key={d.id}
+                                                        onClick={() => handleConfigChange(setDifficulty, d.id)}
+                                                        className={`px-3 py-2 text-sm font-semibold rounded-lg border transition-all ${
+                                                            difficulty === d.id 
+                                                            ? d.class + " ring-2 ring-offset-1"
+                                                            : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                                                        }`}
+                                                    >
+                                                        {d.id}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {error && (
+                                        <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg flex gap-2 items-center">
+                                            <Icons.Alert />
+                                            {error}
+                                        </div>
+                                    )}
+
+                                    <Button 
+                                        onClick={handleGenerate} 
+                                        loading={loading}
+                                        className="w-full text-lg shadow-xl shadow-indigo-200"
+                                    >
+                                        Start Practice
+                                        {!loading && <Icons.ArrowRight className="w-5 h-5" />}
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        // PROBLEM SCREEN
+                        <div className="max-w-4xl mx-auto px-4 py-6">
+                            <div className="flex items-center justify-between mb-6">
+                                <button onClick={handleBack} className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 transition-colors font-medium">
+                                    <Icons.ArrowLeft /> Back
+                                </button>
+                                <div className="flex items-center gap-3">
+                                    {isPreloading && (
+                                        <div className="flex items-center gap-1.5 text-xs font-medium text-indigo-400 animate-pulse bg-indigo-50 px-2 py-1 rounded-full">
+                                            <Icons.CloudDownload className="w-3 h-3" />
+                                            Preloading...
+                                        </div>
+                                    )}
+                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-widest bg-white px-3 py-1 rounded-full border border-slate-100 shadow-sm">
+                                        {subject} • {difficulty.includes("Elementary") ? "Grades 4-6" : difficulty}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {problem && (
+                                <div className="space-y-6 animate-slide-up">
+                                    <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+                                        <div className={`h-1.5 ${difficulty.includes("Elementary") ? 'bg-cyan-400' : 'bg-indigo-500'}`}></div>
+                                        <div className="p-8 md:p-10">
+                                            <div className="mb-6 flex justify-between items-start">
+                                                <span className={`${difficulty.includes("Elementary") ? 'bg-cyan-50 text-cyan-700' : 'bg-indigo-50 text-indigo-700'} px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider`}>
+                                                    Question
+                                                </span>
+                                                <button 
+                                                    onClick={() => setShowHint(!showHint)}
+                                                    className="text-amber-600 hover:text-amber-700 text-sm font-semibold flex items-center gap-1 transition-colors"
+                                                >
+                                                    <Icons.Lightbulb className="w-4 h-4" />
+                                                    {showHint ? "Hide Hint" : "Need a Hint?"}
+                                                </button>
+                                            </div>
+
+                                            <h2 className={`text-2xl md:text-3xl ${difficulty.includes("Elementary") ? 'font-comic leading-relaxed' : 'font-serif leading-snug'} text-slate-800 mb-8`}>
+                                                {problem.question}
+                                            </h2>
+
+                                            {showHint && (
+                                                <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 text-amber-800 text-sm mb-8 animate-fade-in flex gap-3">
+                                                    <Icons.Lightbulb className="w-5 h-5 shrink-0" />
+                                                    <p>{problem.hint}</p>
+                                                </div>
+                                            )}
+
+                                            <div className="mt-8 pt-8 border-t border-slate-100">
+                                                <label className="block text-sm font-bold text-slate-700 mb-3">
+                                                    Your Answer <span className="text-slate-400 font-normal ml-1">(Press Enter to submit)</span>
+                                                </label>
+                                                
+                                                {!isGuessSubmitted ? (
+                                                    <div className="space-y-4">
+                                                        <textarea
+                                                            value={userGuess}
+                                                            onChange={(e) => setUserGuess(e.target.value)}
+                                                            onKeyDown={handleKeyDown}
+                                                            placeholder="Type your answer here..."
+                                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium resize-none"
+                                                            rows="4"
+                                                        />
+                                                        <div className="flex justify-end">
+                                                            <Button 
+                                                                onClick={handleSubmitGuess}
+                                                                disabled={!userGuess.trim()}
+                                                            >
+                                                                Check Answer
+                                                                <Icons.CheckCircle className="w-5 h-5" />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                                                        <div className="flex justify-between items-center mb-2">
+                                                            <span className="text-xs font-bold text-slate-400 uppercase">You wrote</span>
+                                                            <button 
+                                                                onClick={() => setIsGuessSubmitted(false)} 
+                                                                className="text-indigo-600 text-xs font-bold hover:underline flex items-center gap-1"
+                                                            >
+                                                                <Icons.Edit className="w-3 h-3" /> Edit
+                                                            </button>
+                                                        </div>
+                                                        <p className="text-lg text-slate-800 font-medium whitespace-pre-wrap">{userGuess}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {isGuessSubmitted && (
+                                        <div className="bg-white rounded-3xl shadow-lg border border-indigo-100 overflow-hidden animate-slide-up ring-4 ring-indigo-50">
+                                            <div className="bg-indigo-600 px-8 py-4 flex items-center justify-between text-white">
+                                                <div className="flex items-center gap-2 font-bold">
+                                                    <Icons.CheckCircle className="w-6 h-6" />
+                                                    <span>Correct Solution</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="p-8 md:p-10 space-y-8">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                    <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
+                                                        <h3 className="text-xs font-bold text-green-700 uppercase tracking-widest mb-2">Final Answer</h3>
+                                                        <div className="text-2xl font-bold text-green-800 font-serif">
+                                                            {problem.answer}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-col justify-center">
+                                                        <p className="text-slate-500 text-sm">Compare your answer with the official solution.</p>
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Step-by-Step Explanation</h3>
+                                                    <div className="prose prose-slate max-w-none">
+                                                        <div className="bg-slate-50 rounded-2xl p-6 text-slate-700 leading-7 whitespace-pre-wrap font-serif border border-slate-100">
+                                                            {problem.explanation}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex justify-end pt-4 border-t border-slate-100">
+                                                    <Button 
+                                                        onClick={handleGenerate} 
+                                                        loading={loading}
+                                                        variant="outline"
+                                                    >
+                                                        Next Problem <Icons.ArrowRight className="w-5 h-5" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
